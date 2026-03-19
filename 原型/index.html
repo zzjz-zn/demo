@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分发放控制台 - 积分系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <style>
+        :root {
+            --primary-color: #003eb3;
+        }
+        .bg-primary { background-color: var(--primary-color); }
+        .text-primary { color: var(--primary-color); }
+        .border-primary { border-color: var(--primary-color); }
+        
+        #sidebar { transition: width 0.3s ease-in-out; }
+        .sidebar-collapsed { width: 4rem !important; }
+        .sidebar-expanded { width: 16rem !important; }
+        .menu-text-hidden { display: none; }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#003eb3',
+                    },
+                    borderRadius: {
+                        'xs': '4px',
+                        'sm': '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-expanded bg-white border-r border-gray-200 flex flex-col h-full z-20 shadow-sm">
+        <div class="h-16 flex items-center px-4 border-b border-gray-100 shrink-0">
+            <div class="w-8 h-8 bg-brand rounded-sm flex items-center justify-center text-white mr-3 shadow-lg shadow-brand/20">
+                <i data-lucide="award" class="w-5 h-5"></i>
+            </div>
+            <span class="font-bold text-lg menu-text tracking-tight">积分系统</span>
+        </div>
+
+        <nav class="flex-1 py-6 overflow-y-auto">
+            <a href="index.html" class="flex items-center px-4 py-3 bg-blue-50 text-brand border-r-4 border-brand font-medium">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">发放控制台</span>
+            </a>
+            <a href="approval.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand transition-all duration-200">
+                <i data-lucide="check-square" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">调整审批</span>
+            </a>
+            <a href="query.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand transition-all duration-200">
+                <i data-lucide="search" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">明细查询</span>
+            </a>
+            <a href="import.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand transition-all duration-200">
+                <i data-lucide="upload-cloud" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">数据导入</span>
+            </a>
+        </nav>
+
+        <button onclick="toggleSidebar()" class="p-4 border-t border-gray-100 text-gray-400 hover:text-brand flex items-center justify-center transition-colors">
+            <i data-lucide="chevron-left" id="toggle-icon" class="w-5 h-5 transition-transform duration-300"></i>
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 z-10 shadow-sm">
+            <div class="flex items-center space-x-2">
+                <span class="text-gray-400 font-medium">月度积分发放</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                <h1 class="text-lg font-semibold text-gray-800">发放控制台</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold border border-green-100">
+                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                    高速发放引擎已就绪
+                </div>
+                <div class="flex items-center space-x-3 border-l pl-6 border-gray-100">
+                    <div class="text-right">
+                        <p class="text-xs font-medium text-gray-500">当前操作员</p>
+                        <p class="text-sm font-bold text-gray-800">管理员</p>
+                    </div>
+                    <div class="w-10 h-10 bg-brand/10 rounded-full flex items-center justify-center border border-brand/20">
+                        <i data-lucide="user" class="w-5 h-5 text-brand"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-8 bg-[#fcfdfe]">
+            <!-- Stats Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-md border border-gray-100 shadow-sm card-gradient">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-blue-50 rounded-sm text-brand">
+                            <i data-lucide="database" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">+12.5%</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 mb-1">本月预估发放总额</p>
+                    <h3 class="text-2xl font-bold text-gray-900 tracking-tight">58,290,000</h3>
+                </div>
+                <div class="bg-white p-6 rounded-md border border-gray-100 shadow-sm card-gradient">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-orange-50 rounded-sm text-orange-600">
+                            <i data-lucide="zap" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">进行中</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 mb-1">发放引擎当前速率</p>
+                    <h3 class="text-2xl font-bold text-gray-900 tracking-tight">12,500 <span class="text-sm font-normal text-gray-400">TPS</span></h3>
+                </div>
+                <div class="bg-white p-6 rounded-md border border-gray-100 shadow-sm card-gradient">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-purple-50 rounded-sm text-purple-600">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">静态</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 mb-1">覆盖客户总数</p>
+                    <h3 class="text-2xl font-bold text-gray-900 tracking-tight">1,245,600</h3>
+                </div>
+                <div class="bg-white p-6 rounded-md border border-gray-100 shadow-sm card-gradient">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-red-50 rounded-sm text-red-600">
+                            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">需关注</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 mb-1">待补偿异常流水</p>
+                    <h3 class="text-2xl font-bold text-gray-900 tracking-tight">12</h3>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Chart Area -->
+                <div class="lg:col-span-2 bg-white p-8 rounded-md border border-gray-100 shadow-sm flex flex-col">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">实发数量汇总统计</h3>
+                            <p class="text-sm text-gray-400">按月份与客户等级汇总统计</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <select class="text-sm border-none bg-gray-50 px-3 py-2 rounded-sm font-medium focus:ring-0 outline-none">
+                                <option>2026年3月</option>
+                                <option>2026年2月</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="chart-container" class="flex-1 w-full min-h-[400px]">
+                        <!-- Recharts will render here -->
+                    </div>
+                </div>
+
+                <!-- Fast Actions & Progress -->
+                <div class="space-y-8">
+                    <!-- Distribution Progress -->
+                    <div class="bg-white p-8 rounded-md border border-gray-100 shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-800 mb-6">当前发放进度</h3>
+                        <div class="space-y-6">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="font-medium text-gray-600">月度积分发放主任务</span>
+                                <span class="font-bold text-brand">78%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                                <div class="bg-brand h-full rounded-full transition-all duration-1000" style="width: 78%"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-xs">
+                                <div class="p-3 bg-gray-50 rounded-sm border border-gray-100">
+                                    <p class="text-gray-400 mb-1">已处理</p>
+                                    <p class="font-bold text-gray-800 text-sm">45,466,200</p>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-sm border border-gray-100">
+                                    <p class="text-gray-400 mb-1">剩余时间</p>
+                                    <p class="font-bold text-gray-800 text-sm">~45 mins</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fast Actions -->
+                    <div class="bg-white p-8 rounded-md border border-gray-100 shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-800 mb-6">快捷操作</h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            <button onclick="window.location.href='import.html'" class="flex items-center justify-between p-4 border border-gray-100 rounded-sm hover:border-brand/30 hover:bg-brand/[0.02] transition-all group">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-blue-50 rounded-sm text-brand group-hover:bg-brand group-hover:text-white transition-colors">
+                                        <i data-lucide="upload" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="ml-4 text-left">
+                                        <p class="text-sm font-bold text-gray-700">数据导入与计算</p>
+                                        <p class="text-xs text-gray-400">适配客户等级切换逻辑</p>
+                                    </div>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                            </button>
+                            <button onclick="window.location.href='approval.html'" class="flex items-center justify-between p-4 border border-gray-100 rounded-sm hover:border-brand/30 hover:bg-brand/[0.02] transition-all group">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-purple-50 rounded-sm text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                        <i data-lucide="file-check" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="ml-4 text-left">
+                                        <p class="text-sm font-bold text-gray-700">月度发放审批</p>
+                                        <p class="text-xs text-gray-400">24 条待处理申请</p>
+                                    </div>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                            </button>
+                            <button class="flex items-center justify-between p-4 border border-gray-100 rounded-sm hover:border-red-100 hover:bg-red-50 transition-all group">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-red-50 rounded-sm text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="ml-4 text-left">
+                                        <p class="text-sm font-bold text-gray-700">异常补偿重试</p>
+                                        <p class="text-xs text-gray-400">一键重发失败流水</p>
+                                    </div>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Sidebar logic
+        let sidebarCollapsed = false;
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const menuTexts = document.querySelectorAll('.menu-text');
+            
+            sidebarCollapsed = !sidebarCollapsed;
+            
+            if (sidebarCollapsed) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                toggleIcon.classList.add('rotate-180');
+                menuTexts.forEach(t => t.classList.add('menu-text-hidden'));
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                toggleIcon.classList.remove('rotate-180');
+                menuTexts.forEach(t => t.classList.remove('menu-text-hidden'));
+            }
+        }
+
+        // Recharts logic
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+        const data = [
+            { name: '大众客户', points: 1200, growth: 1100 },
+            { name: '黄金客户', points: 1900, growth: 1500 },
+            { name: '白金客户', points: 3200, growth: 2800 },
+            { name: '钻石客户', points: 4800, growth: 4200 },
+            { name: '私行客户', points: 6500, growth: 5800 },
+        ];
+
+        const Chart = () => {
+            return React.createElement(ResponsiveContainer, { width: '100%', height: '100%' },
+                React.createElement(BarChart, { data: data, margin: { top: 20, right: 30, left: 20, bottom: 5 } },
+                    React.createElement(CartesianGrid, { strokeDasharray: '3 3', vertical: false, stroke: '#f0f0f0' }),
+                    React.createElement(XAxis, { dataKey: 'name', axisLine: false, tickLine: false, tick: { fill: '#9ca3af', fontSize: 12 } }),
+                    React.createElement(YAxis, { axisLine: false, tickLine: false, tick: { fill: '#9ca3af', fontSize: 12 } }),
+                    React.createElement(Tooltip, { 
+                        contentStyle: { borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' },
+                        cursor: { fill: '#f8faff' }
+                    }),
+                    React.createElement(Legend, { verticalAlign: 'top', align: 'right', iconType: 'circle', wrapperStyle: { paddingBottom: '20px', fontSize: '12px', fontWeight: 'bold' } }),
+                    React.createElement(Bar, { dataKey: 'points', name: '实发数量 (万)', fill: '#003eb3', radius: [4, 4, 0, 0], barSize: 30 }),
+                    React.createElement(Bar, { dataKey: 'growth', name: '去年同期 (万)', fill: '#e5e7eb', radius: [4, 4, 0, 0], barSize: 30 })
+                )
+            );
+        };
+
+        // Render Recharts using React
+        // Note: In a real environment, you'd need React/ReactDOM loaded. 
+        // For a standalone HTML prototype, we simulate the chart with an SVG or simpler representation if React isn't available.
+        // But the prompt specifically asked for Recharts. I'll include the script tags.
+    </script>
+    <!-- React Dependencies for Recharts -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script>
+        const root = ReactDOM.createRoot(document.getElementById('chart-container'));
+        root.render(React.createElement(Chart));
+    </script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据导入与计算配置 - 积分系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-color: #003eb3;
+        }
+        #sidebar { transition: width 0.3s ease-in-out; }
+        .sidebar-collapsed { width: 4rem !important; }
+        .sidebar-expanded { width: 16rem !important; }
+        .menu-text-hidden { display: none; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#003eb3',
+                    },
+                    borderRadius: {
+                        'xs': '4px',
+                        'sm': '8px',
+                        'md': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#fcfdfe] text-gray-900 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-expanded bg-white border-r border-gray-200 flex flex-col h-full z-20 shadow-sm">
+        <div class="h-16 flex items-center px-4 border-b border-gray-100 shrink-0">
+            <div class="w-8 h-8 bg-brand rounded-sm flex items-center justify-center text-white mr-3 shadow-lg shadow-brand/20">
+                <i data-lucide="award" class="w-5 h-5"></i>
+            </div>
+            <span class="font-bold text-lg menu-text tracking-tight">积分系统</span>
+        </div>
+
+        <nav class="flex-1 py-6 overflow-y-auto">
+            <a href="index.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand transition-all duration-200">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">发放控制台</span>
+            </a>
+            <a href="approval.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand transition-all duration-200">
+                <i data-lucide="check-square" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">调整审批</span>
+            </a>
+            <a href="query.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand transition-all duration-200">
+                <i data-lucide="search" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">明细查询</span>
+            </a>
+            <a href="import.html" class="flex items-center px-4 py-3 bg-blue-50 text-brand border-r-4 border-brand font-medium">
+                <i data-lucide="upload-cloud" class="w-5 h-5 mr-3"></i>
+                <span class="menu-text">数据导入</span>
+            </a>
+        </nav>
+
+        <button onclick="toggleSidebar()" class="p-4 border-t border-gray-100 text-gray-400 hover:text-brand flex items-center justify-center transition-colors">
+            <i data-lucide="chevron-left" id="toggle-icon" class="w-5 h-5 transition-transform duration-300"></i>
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 z-10 shadow-sm">
+            <div class="flex items-center space-x-2">
+                <span class="text-gray-400 font-medium">月度积分发放</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                <h1 class="text-lg font-semibold text-gray-800">数据导入与计算配置</h1>
+            </div>
+            <div class="flex items-center space-x-4 text-sm font-bold text-gray-700">
+                <span class="flex items-center text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs border border-green-100">
+                    <i data-lucide="check-circle" class="w-3 h-3 mr-1.5"></i>
+                    计算引擎负载: 15%
+                </span>
+                <div class="h-8 w-[1px] bg-gray-100 mx-2"></div>
+                <span>管理员</span>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 bg-[#fcfdfe]">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <!-- Section 1: Calculation Configuration -->
+                <section class="bg-white p-8 rounded-md border border-gray-100 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-8">
+                        <div class="p-2 bg-blue-50 rounded-sm text-brand">
+                            <i data-lucide="settings-2" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-800">计算规则适配性配置</h2>
+                            <p class="text-sm text-gray-400">适配客户等级/服务等级切换逻辑</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div class="space-y-4 p-6 bg-gray-50/50 rounded-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm font-bold text-gray-700">客户计算维度切换</label>
+                                <div class="relative inline-flex items-center cursor-pointer group">
+                                    <input type="checkbox" id="level-switch" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-brand transition-all"></div>
+                                    <div class="absolute left-[2px] top-[2px] w-5 h-5 bg-white rounded-full transition-all peer-checked:translate-x-full shadow-sm"></div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                当前选中：<span class="text-brand font-bold">客户等级 (Customer Level)</span>。<br>
+                                切换后系统将自动适配积分计算公式，适配性改造已完成。
+                            </p>
+                        </div>
+
+                        <div class="space-y-4 p-6 bg-gray-50/50 rounded-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm font-bold text-gray-700">善家卡独立系数 (2.0)</label>
+                                <span class="px-2 py-0.5 bg-red-50 text-red-500 text-[10px] font-bold rounded-full border border-red-100">已取消</span>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                优化规则：善家卡积分计算不再使用独立系数 2.0，统一按基础系数 1.0 计算。
+                            </p>
+                            <div class="h-[1px] bg-gray-200"></div>
+                            <p class="text-[10px] font-bold text-gray-300 italic">由“取消善家卡独立计算系数”需求项驱动</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2: Data Import -->
+                <section class="bg-white p-8 rounded-md border border-gray-100 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-8">
+                        <div class="p-2 bg-purple-50 rounded-sm text-purple-600">
+                            <i data-lucide="file-up" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-800">月度积分数据导入优化</h2>
+                            <p class="text-sm text-gray-400">采用高速解析引擎，支持百万级数据秒级解析</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between text-sm mb-2">
+                            <span class="font-bold text-gray-600">选择导入月份</span>
+                            <input type="month" value="2026-03" class="px-3 py-1 bg-gray-50 border-none rounded-sm text-xs font-bold outline-none focus:ring-1 focus:ring-brand">
+                        </div>
+                        
+                        <!-- Drag and Drop -->
+                        <div class="border-2 border-dashed border-gray-200 rounded-md p-12 flex flex-col items-center justify-center space-y-4 bg-gray-50/30 hover:bg-brand/[0.02] hover:border-brand/30 transition-all cursor-pointer group">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 group-hover:scale-110 transition-transform duration-300">
+                                <i data-lucide="cloud-upload" class="w-8 h-8 text-brand"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-sm font-bold text-gray-700">点击或将文件拖拽到此处</p>
+                                <p class="text-xs text-gray-400 mt-2">支持 .xlsx, .csv 格式，单次最大支持 50MB</p>
+                            </div>
+                            <button class="mt-4 px-6 py-2 bg-brand text-white text-xs font-bold rounded-sm shadow-lg shadow-brand/20 hover:bg-blue-700 transition-all">立即选择文件</button>
+                        </div>
+
+                        <!-- Import Notice -->
+                        <div class="flex items-start p-4 bg-blue-50/50 rounded-sm border border-blue-100">
+                            <i data-lucide="info" class="w-4 h-4 text-brand mr-3 mt-0.5"></i>
+                            <div class="space-y-1">
+                                <p class="text-xs font-bold text-blue-800">导入优化说明</p>
+                                <p class="text-[11px] text-blue-600/80 leading-relaxed">
+                                    基于 EasyExcel 异步解析技术，导入后系统将自动在后台进行“计算服务适配性改造”逻辑校验。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Footer Actions -->
+                <div class="flex items-center justify-between py-4">
+                    <button class="flex items-center text-sm font-bold text-gray-400 hover:text-brand transition-colors">
+                        <i data-lucide="download" class="w-4 h-4 mr-2"></i> 下载导入模板
+                    </button>
+                    <div class="space-x-4">
+                        <button class="px-8 py-3 bg-white border border-gray-200 text-gray-500 rounded-sm font-bold text-sm hover:bg-gray-50 transition-all">取消</button>
+                        <button class="px-8 py-3 bg-brand text-white rounded-sm font-bold text-sm shadow-xl shadow-brand/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all">确认并开始计算</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        let sidebarCollapsed = false;
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const menuTexts = document.querySelectorAll('.menu-text');
+            sidebarCollapsed = !sidebarCollapsed;
+            if (sidebarCollapsed) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                toggleIcon.classList.add('rotate-180');
+                menuTexts.forEach(t => t.classList.add('menu-text-hidden'));
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                toggleIcon.classList.remove('rotate-180');
+                menuTexts.forEach(t => t.classList.remove('menu-text-hidden'));
+            }
+        }
+    </script>
+</body>
+</html>
