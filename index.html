@@ -250,16 +250,19 @@
                                                 </div>
                                                 <div className="text-[10px] text-gray-400">数据日期: T-1</div>
                                             </div>
-                                            <div className="bg-blue-50/50 rounded-lg p-3 mb-4 space-y-1">
+                                            
+                                            {/* New Filter Criteria Box */}
+                                            <div className="bg-blue-50/50 rounded-lg p-3 mb-4 space-y-1 border border-blue-100/30">
                                                 <div className="flex text-[11px] text-gray-500">
-                                                    <span className="w-16 shrink-0">筛选条件:</span>
-                                                    <span className="font-medium text-blue-700">近一年收益率 &gt; 20% | 风险等级 ≥ R3</span>
+                                                    <span className="w-16 shrink-0 font-medium">筛选条件:</span>
+                                                    <span className="font-bold text-blue-700">近一年收益率 &gt; 20% | 风险等级 ≥ R3</span>
                                                 </div>
                                                 <div className="flex text-[11px] text-gray-500">
-                                                    <span className="w-16 shrink-0">结果条数:</span>
-                                                    <span className="font-medium text-gray-700">共 200 条</span>
+                                                    <span className="w-16 shrink-0 font-medium">匹配结果:</span>
+                                                    <span className="font-bold text-gray-700">共 {allFunds.length} 条数据，已为您精选 5 只最契合产品</span>
                                                 </div>
                                             </div>
+
                                             <div className="overflow-x-auto table-container">
                                                 <table className="w-full text-[11px] text-left border-collapse">
                                                     <thead className="bg-gray-50 border-b border-gray-100">
@@ -296,8 +299,8 @@
                                                 <Icon name="sparkles" className="w-4 h-4 text-amber-400 mr-2" />
                                                 深度解析推荐结果:
                                             </p>
-                                            {allFunds.slice(0, 2).map((fund, index) => (
-                                                <div key={index} className="product-card rounded-2xl p-4 bg-gradient-to-br from-amber-50/30 to-white">
+                                            {allFunds.slice(0, 3).map((fund, index) => (
+                                                <div key={index} className="product-card rounded-2xl p-4 bg-gradient-to-br from-amber-50/30 to-white shadow-sm border border-amber-100/30">
                                                     <div className="flex justify-between items-start mb-3">
                                                         <div className="flex items-center bg-amber-100/50 text-amber-700 px-2.5 py-1 rounded-lg text-[10px] font-bold">
                                                             <Icon name="thumbs-up" className="w-3 h-3 mr-1" />
