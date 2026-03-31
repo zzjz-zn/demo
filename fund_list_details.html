@@ -144,6 +144,62 @@
             const [aiContent, setAiContent] = useState(null); // null, 'loading', 'result'
             const [isComplianceExpanded, setIsComplianceExpanded] = useState(false);
             const [isCustomerTagActive, setIsCustomerTagActive] = useState(true);
+            const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+            const [customerSessions, setCustomerSessions] = useState([]);
+            const [activeSessionId, setActiveSessionId] = useState(null);
+            const [fundPickerSelected, setFundPickerSelected] = useState([]);
+            const [fundPickerSearch, setFundPickerSearch] = useState('');
+            const [fundPickerShowAll, setFundPickerShowAll] = useState(false);
+            const [productQueryMessages, setProductQueryMessages] = useState([]);
+            const [isCustomerArchiveOpen, setIsCustomerArchiveOpen] = useState(true);
+
+            const fundCatalog = useMemo(() => ([
+                {
+                    id: '015841',
+                    name: '永赢科技智选混合A',
+                    type: '混合基金',
+                    minBuy: '1元起购',
+                    risk: 'R4中高风险',
+                    yield1y: '+205.66%',
+                    summary: '高弹性、科技赛道集中度高，适合激进型投资者',
+                    volatility: '28.5%',
+                    maxDrawdown: '-22.4%',
+                    strategy: '主攻TMT及电子半导体，偏成长风格，仓位弹性高。',
+                    fee: '管理费1.2%/年；A类通常含申购费（以渠道为准）。',
+                    holdings: '前十大持仓集中度高（约55%），偏科技龙头。',
+                    manager: '高经理：4年经验，擅长科技赛道选股与轮动。'
+                },
+                {
+                    id: '015842',
+                    name: '永赢科技智选混合C',
+                    type: '混合基金',
+                    minBuy: '1元起购',
+                    risk: 'R4中高风险',
+                    yield1y: '+203.74%',
+                    summary: 'C类费率结构适合中短持有，但波动与回撤偏大',
+                    volatility: '28.5%',
+                    maxDrawdown: '-22.4%',
+                    strategy: '主攻TMT及电子半导体，偏成长风格，仓位弹性高。',
+                    fee: '管理费1.2%/年；C类无申购费，短期持有可能有赎回费。',
+                    holdings: '前十大持仓集中度高（约55%），偏科技龙头。',
+                    manager: '高经理：4年经验，擅长科技赛道选股与轮动。'
+                },
+                {
+                    id: '012455',
+                    name: '华商均衡成长混合A',
+                    type: '混合基金',
+                    minBuy: '1元起购',
+                    risk: 'R3中风险',
+                    yield1y: '+185.51%',
+                    summary: '稳健均衡、分散配置，适合中长期配置型投资者',
+                    volatility: '18.2%',
+                    maxDrawdown: '-12.8%',
+                    strategy: '全行业均衡配置，注重估值安全边际与风险控制。',
+                    fee: '管理费1.2%/年；A类通常含申购费（以渠道为准）。',
+                    holdings: '持仓分散度较高（约32%），覆盖医药、消费与制造。',
+                    manager: '张经理：8年经验，均衡型选手，风控体系成熟。'
+                }
+            ]), []);
             
             // 模拟客户画像数据
             const customerProfile = useMemo(() => {
@@ -156,6 +212,56 @@
                 };
                 return profiles[customerId] || { risk: 'R3', level: '黄金客户', age: '35', gender: '♀', tags: ['非企微客户', 'R3', '黄金客户'], name: customerId, liquidity: '中', holdings: '债券型基金' };
             }, [customerId]);
+
+            const maskCustomerName = (name) => {
+                const text = String(name || '');
+                if (text.length <= 1) return text;
+                return text[0] + '*' + text[text.length - 1];
+            };
+
+            const CustomerArchivePanel = () => (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <button
+                        onClick={() => setIsCustomerArchiveOpen(v => !v)}
+                        className="w-full px-4 py-3 flex items-center justify-between"
+                    >
+                        <div className="flex items-center text-[14px] font-bold text-gray-900">
+                            <Icon name="file-text" className="w-5 h-5 text-gray-900 mr-2" />
+                            <span>本次回答结合</span>
+                            <span className="text-blue-600 mx-1">{maskCustomerName(customerProfile.name)}</span>
+                            <span>的客户档案</span>
+                        </div>
+                        <Icon name={isCustomerArchiveOpen ? "chevron-up" : "chevron-down"} className="w-5 h-5 text-gray-400" />
+                    </button>
+
+                    {isCustomerArchiveOpen && (
+                        <div className="px-4 pb-4">
+                            <div className="h-px bg-gray-100 mb-4"></div>
+                            <div className="text-[14px] font-bold text-gray-900 mb-3">本次使用的信息</div>
+                            <div className="bg-gray-50/60 rounded-2xl p-4 border border-gray-100">
+                                <div className="grid grid-cols-2 gap-4 text-[12px] text-gray-700">
+                                    <div className="flex items-center">
+                                        <span className="font-bold text-gray-900 mr-2">风险等级：</span>
+                                        <span className="font-medium">{customerProfile.risk}</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="font-bold text-gray-900 mr-2">年龄：</span>
+                                        <span className="font-medium">{customerProfile.age}岁</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="font-bold text-gray-900 mr-2">资金流动性：</span>
+                                        <span className="font-medium">{customerProfile.liquidity}</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="font-bold text-gray-900 mr-2">持仓偏好：</span>
+                                        <span className="font-medium">{customerProfile.holdings}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
 
             // 模拟基于画像的推荐逻辑 - 区分表格列表和深度分析
             const { tableProducts, deepAnalysisProducts } = useMemo(() => {
@@ -198,9 +304,514 @@
             const handleFundRecommend = () => {
                 setShowAskMenu(false);
                 setAiContent('loading');
-                setTimeout(() => {
-                    setAiContent('result');
-                }, 800);
+                const newSession = {
+                    id: Date.now(),
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    title: `给${customerProfile.name}推荐产品`,
+                    messages: [
+                        { type: 'user', content: `给${customerProfile.name}风险等级[${customerProfile.risk}]年龄[${customerProfile.age}]持仓[${customerProfile.holdings}]推荐产品` },
+                        { type: 'ai', content: 'recommendation' }
+                    ]
+                };
+
+                const updated = [newSession, ...customerSessions];
+                setCustomerSessions(updated);
+                setActiveSessionId(newSession.id);
+                try {
+                    localStorage.setItem(`customer_history_${customerId}`, JSON.stringify(updated));
+                } catch (e) {}
+
+                setTimeout(() => setAiContent('result'), 800);
+            };
+
+            useEffect(() => {
+                try {
+                    const saved = localStorage.getItem(`customer_history_${customerId}`);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        setCustomerSessions(parsed);
+                        setActiveSessionId(parsed?.[0]?.id ?? null);
+                    } else {
+                        setCustomerSessions([]);
+                        setActiveSessionId(null);
+                    }
+                } catch (e) {
+                    setCustomerSessions([]);
+                    setActiveSessionId(null);
+                }
+            }, [customerId]);
+
+            const startNewChat = () => {
+                setAiContent(null);
+                setActiveSessionId(null);
+                setIsHistoryOpen(false);
+                setShowAskMenu(false);
+            };
+
+            const selectSession = (sessionId) => {
+                setActiveSessionId(sessionId);
+                setAiContent('result');
+                setIsHistoryOpen(false);
+            };
+
+            const clearCustomerHistory = () => {
+                setCustomerSessions([]);
+                setActiveSessionId(null);
+                setIsHistoryOpen(false);
+                try {
+                    localStorage.removeItem(`customer_history_${customerId}`);
+                } catch (e) {}
+            };
+
+            const getFundById = (id) => fundCatalog.find(f => f.id === id);
+            const formatFundLabel = (fund) => `${fund.name}(${fund.id})`;
+
+            const extractRiskLevelNumber = (riskText) => {
+                const match = String(riskText || '').match(/R(\d)/);
+                const parsed = match ? Number(match[1]) : NaN;
+                return Number.isFinite(parsed) ? parsed : 3;
+            };
+
+            const getSummaryAdviceForCustomer = (fund) => {
+                const customerRisk = extractRiskLevelNumber(customerProfile.risk);
+                const fundRisk = extractRiskLevelNumber(fund?.risk);
+                const riskHigherThanCustomer = fundRisk > customerRisk;
+
+                const pros = [
+                    '收益弹性较强，可作为卫星仓增强',
+                    '适合年轻客户以小仓位参与成长赛道'
+                ];
+                const cons = [
+                    '波动与回撤可能偏大，短期体验不稳定',
+                    '与客户当前偏好（现金类资产）存在风格差异'
+                ];
+                const notes = [
+                    riskHigherThanCustomer
+                        ? `本产品风险等级（${fund?.risk || '-'}）高于客户风险等级（${customerProfile.risk}），不可作为推荐及营销，仅为参考。`
+                        : '本分析不可作为推荐及营销，仅为参考。',
+                    '建议控制仓位（例如 5%–15%），分批/定投进入',
+                    '若近期可能用钱，优先保证流动性与低回撤底仓'
+                ];
+
+                return { pros, cons, notes };
+            };
+
+            const AiGradientSummary = ({ text }) => (
+                <div className="p-[2px] rounded-2xl bg-gradient-to-r from-fuchsia-400 via-blue-400 to-emerald-400">
+                    <div className="rounded-2xl p-4 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-white/60 shadow-lg">
+                        <div className="flex items-center mb-2">
+                            <Icon name="sparkles" className="w-4 h-4 text-amber-400 mr-2" />
+                            <div className="text-[12px] font-bold text-gray-800">AI 概述</div>
+                        </div>
+                        <p className="text-[12px] text-gray-700 leading-relaxed">{text}</p>
+                    </div>
+                </div>
+            );
+
+            const closeEmbeddedFundPicker = () => {
+                setProductQueryMessages(prev => prev.filter(m => m?.kind !== 'fund_picker_embed'));
+            };
+
+            const openFundPicker = () => {
+                setShowAskMenu(false);
+                setFundPickerSelected([]);
+                setFundPickerSearch('');
+                setFundPickerShowAll(false);
+                setProductQueryMessages([
+                    { type: 'user', text: '基金查询' },
+                    { type: 'ai', kind: 'fund_picker_embed' }
+                ]);
+            };
+
+            const togglePickFund = (fundId) => {
+                setFundPickerSelected(prev => {
+                    const exists = prev.includes(fundId);
+                    if (exists) return prev.filter(id => id !== fundId);
+                    if (prev.length >= 2) return prev;
+                    return [...prev, fundId];
+                });
+            };
+
+            const confirmFundPicker = () => {
+                if (fundPickerSelected.length === 0) return;
+                const pickedFunds = fundPickerSelected.map(getFundById).filter(Boolean);
+                const userText = pickedFunds.length === 2
+                    ? `基金产品查询：结合客户画像对比${formatFundLabel(pickedFunds[0])}与${formatFundLabel(pickedFunds[1])}`
+                    : `基金产品查询：结合客户画像查看${formatFundLabel(pickedFunds[0])}的核心指标与匹配建议`;
+
+                const aiMessage = pickedFunds.length === 2
+                    ? { type: 'ai', kind: 'fund_compare', funds: pickedFunds.map(f => f.id) }
+                    : { type: 'ai', kind: 'fund_single', funds: [pickedFunds[0].id] };
+
+                setProductQueryMessages([
+                    { type: 'user', text: userText },
+                    aiMessage
+                ]);
+            };
+
+            const renderAiFundPickerEmbed = () => (
+                <div className="ai-bubble px-4 py-4 max-w-[95%] text-sm leading-relaxed text-gray-800 shadow-sm border border-gray-100">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <div className="text-sm font-bold text-gray-900">基金产品选择</div>
+                            <div className="text-[11px] text-gray-400 mt-1">数据截至20260326</div>
+                        </div>
+                        <button onClick={closeEmbeddedFundPicker} className="text-gray-400">
+                            <Icon name="x" className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="mt-4 flex items-center bg-white rounded-2xl px-4 py-2.5 border border-gray-100">
+                        <Icon name="search" className="w-4 h-4 text-gray-400 mr-2" />
+                        <input
+                            value={fundPickerSearch}
+                            onChange={(e) => setFundPickerSearch(e.target.value)}
+                            placeholder="搜索基金名称或代码"
+                            className="flex-1 bg-transparent border-none outline-none text-sm"
+                        />
+                    </div>
+
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-white">
+                        {(fundPickerShowAll ? fundCatalog : fundCatalog.slice(0, 3))
+                            .filter(f => (f.name + f.id).includes(fundPickerSearch))
+                            .map((fund) => {
+                                const checked = fundPickerSelected.includes(fund.id);
+                                return (
+                                    <div
+                                        key={fund.id}
+                                        onClick={() => togglePickFund(fund.id)}
+                                        className="px-4 py-3 border-b border-gray-50 active:bg-gray-50 transition-colors cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="min-w-0">
+                                                <div className="text-[14px] font-bold text-gray-900 truncate">{fund.name}</div>
+                                                <div className="mt-2 flex items-start">
+                                                    <div className="text-red-500 font-bold text-base leading-none">{fund.yield1y}</div>
+                                                    <div className="ml-3 text-xs text-gray-400 leading-none mt-1">近一年涨跌幅</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-4 shrink-0">
+                                                <div className="text-right">
+                                                    <div className="text-[12px] font-bold text-gray-800">{fund.type}</div>
+                                                    <div className="text-[11px] text-gray-400 mt-1">{fund.minBuy} | {fund.risk}</div>
+                                                </div>
+                                                <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}>
+                                                    {checked && <Icon name="check" className="w-4 h-4 text-white" />}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                        {!fundPickerShowAll && fundCatalog.length > 3 && (
+                            <div className="p-4">
+                                <button
+                                    onClick={() => setFundPickerShowAll(true)}
+                                    className="w-full py-2.5 text-sm font-bold text-blue-600 border border-blue-100 rounded-2xl active:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+                                >
+                                    <span>查看全部</span>
+                                    <Icon name="chevron-right" className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {fundPickerSelected.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            {fundPickerSelected.map(id => {
+                                const f = getFundById(id);
+                                if (!f) return null;
+                                return (
+                                    <div key={id} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1.5 rounded-2xl text-xs font-bold">
+                                        <span className="max-w-[220px] truncate">{f.name}</span>
+                                        <button className="ml-2 p-0.5" onClick={(e) => { e.stopPropagation(); togglePickFund(id); }}>
+                                            <Icon name="x" className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    <button
+                        onClick={confirmFundPicker}
+                        disabled={fundPickerSelected.length === 0}
+                        className={`w-full mt-4 py-3 rounded-2xl text-sm font-bold text-white shadow-lg active:scale-[0.98] transition-all ${fundPickerSelected.length === 0 ? 'bg-blue-300 shadow-blue-100' : 'bg-blue-600 shadow-blue-200'}`}
+                    >
+                        诊断({fundPickerSelected.length})
+                    </button>
+                    <div className="text-[11px] text-center text-gray-300 mt-2">最多可选两只</div>
+                </div>
+            );
+
+            const renderAiFundCompare = (fundA, fundB) => (
+                <div className="ai-bubble px-4 py-4 max-w-[95%] text-sm leading-relaxed text-gray-800 shadow-sm border border-gray-100">
+                    <p className="text-xs text-gray-400 mb-3 font-medium">*以下对比分析由AI基于公开披露信息生成，不构成投资建议。</p>
+                    <div className="space-y-6">
+                        <p className="font-medium text-gray-700">已为您提取两只产品的核心对比维度，分析如下：</p>
+                        <section className="space-y-4">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="clipboard-list" className="w-4 h-4" />
+                                <span>1. 对比概览</span>
+                            </div>
+                            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                                        <h3 className="font-bold text-gray-900 text-xs">核心指标对比</h3>
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto table-container mx-1">
+                                    <table className="w-full text-[11px] text-left border-collapse">
+                                        <tbody className="divide-y divide-gray-100">
+                                            <tr className="bg-gray-50/50">
+                                                <th className="py-2.5 px-3 font-semibold text-gray-600 bg-gray-50 w-24 border-r border-gray-100">基金名称/ID</th>
+                                                <td className="py-2.5 px-3">
+                                                    <div className="font-bold text-gray-800 leading-tight">{fundA.name}</div>
+                                                    <div className="text-gray-400 mt-0.5">{fundA.id}</div>
+                                                </td>
+                                                <td className="py-2.5 px-3">
+                                                    <div className="font-bold text-gray-800 leading-tight">{fundB.name}</div>
+                                                    <div className="text-gray-400 mt-0.5">{fundB.id}</div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th className="py-2.5 px-3 font-semibold text-gray-600 bg-gray-50 w-24 border-r border-gray-100">近一年收益</th>
+                                                <td className="py-2.5 px-3 font-bold text-red-500">{fundA.yield1y.replace('+', '')}</td>
+                                                <td className="py-2.5 px-3 font-bold text-red-500">{fundB.yield1y.replace('+', '')}</td>
+                                            </tr>
+                                            <tr>
+                                                <th className="py-2.5 px-3 font-semibold text-gray-600 bg-gray-50 w-24 border-r border-gray-100">风险等级</th>
+                                                <td className="py-2.5 px-3 text-gray-600">{fundA.risk}</td>
+                                                <td className="py-2.5 px-3 text-gray-600">{fundB.risk}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+                        <section className="space-y-2">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="info" className="w-4 h-4" />
+                                <span>2. 产品基础信息</span>
+                            </div>
+                            <div className="pl-6 space-y-2">
+                                <div className="text-xs text-gray-700 leading-relaxed">
+                                    <span className="font-bold text-gray-900">{fundA.name}：</span>
+                                    <span className="text-gray-800">{fundA.type}</span>
+                                    <span className="mx-1 text-gray-400">|</span>
+                                    <span className="text-gray-800">{fundA.minBuy}</span>
+                                    <span className="mx-1 text-gray-400">|</span>
+                                    <span className="text-gray-800">{fundA.risk}</span>
+                                </div>
+                                <div className="text-xs text-gray-700 leading-relaxed">
+                                    <span className="font-bold text-gray-900">{fundB.name}：</span>
+                                    <span className="text-gray-800">{fundB.type}</span>
+                                    <span className="mx-1 text-gray-400">|</span>
+                                    <span className="text-gray-800">{fundB.minBuy}</span>
+                                    <span className="mx-1 text-gray-400">|</span>
+                                    <span className="text-gray-800">{fundB.risk}</span>
+                                </div>
+                            </div>
+                        </section>
+                        <section className="space-y-2">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="trending-up" className="w-4 h-4" />
+                                <span>3. 收益风险指标</span>
+                            </div>
+                            <ul className="pl-6 space-y-1 list-disc text-xs text-gray-600">
+                                <li><span className="font-bold">年化波动率：</span>{fundA.name}({fundA.volatility}) vs {fundB.name}({fundB.volatility})</li>
+                                <li><span className="font-bold">最大回撤：</span>{fundA.name}({fundA.maxDrawdown}) vs {fundB.name}({fundB.maxDrawdown})</li>
+                            </ul>
+                        </section>
+                        <section className="space-y-2">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="target" className="w-4 h-4" />
+                                <span>4. 投资策略</span>
+                            </div>
+                            <div className="pl-6 space-y-2 text-xs text-gray-600">
+                                <p><span className="font-bold">{fundA.name}：</span>{fundA.strategy}</p>
+                                <p><span className="font-bold">{fundB.name}：</span>{fundB.strategy}</p>
+                            </div>
+                        </section>
+
+                        <section className="space-y-3">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="clipboard-check" className="w-4 h-4" />
+                                <span>5. 产品总结与注意事项</span>
+                            </div>
+                            <div className="pl-6 space-y-3">
+                                {(() => {
+                                    const customerRisk = extractRiskLevelNumber(customerProfile.risk);
+                                    const getVol = (f) => Number(String(f?.volatility || '').replace('%', ''));
+                                    const getDd = (f) => Number(String(f?.maxDrawdown || '').replace('%', ''));
+                                    const scoreFund = (f) => {
+                                        const r = extractRiskLevelNumber(f?.risk);
+                                        const riskDiff = r - customerRisk;
+                                        const vol = getVol(f);
+                                        const dd = getDd(f);
+
+                                        let score = 0;
+                                        if (riskDiff > 0) score -= riskDiff * 2;
+                                        if (riskDiff === 0) score += 1.5;
+                                        if (riskDiff < 0) score += 1;
+
+                                        if (customerProfile.liquidity === '高' && Number.isFinite(vol)) score -= Math.max(0, (vol - 18) / 6);
+                                        if (Number.isFinite(dd)) score -= Math.max(0, (Math.abs(dd) - 12) / 6);
+
+                                        return score;
+                                    };
+
+                                    const scoreA = scoreFund(fundA);
+                                    const scoreB = scoreFund(fundB);
+                                    const better = scoreA === scoreB ? null : (scoreA > scoreB ? fundA : fundB);
+
+                                    const riskTip = (fund) => {
+                                        const fundRisk = extractRiskLevelNumber(fund?.risk);
+                                        if (fundRisk > customerRisk) {
+                                            return `本产品风险等级（${fund.risk}）高于客户风险等级（${customerProfile.risk}），不可作为推荐及营销，仅为参考。`;
+                                        }
+                                        return '不可作为推荐及营销，仅为参考。';
+                                    };
+
+                                    const buildProsCons = (fund) => {
+                                        const fundRisk = extractRiskLevelNumber(fund?.risk);
+                                        const vol = getVol(fund);
+                                        const dd = getDd(fund);
+                                        const pros = [];
+                                        const cons = [];
+
+                                        if (fundRisk <= customerRisk) pros.push('风险等级与客户画像更匹配');
+                                        if (fundRisk > customerRisk) cons.push('风险等级高于客户画像，短期体验可能更波动');
+                                        if (Number.isFinite(dd) && Math.abs(dd) <= 15) pros.push('回撤相对可控（示例）');
+                                        if (Number.isFinite(dd) && Math.abs(dd) > 15) cons.push('回撤偏大（示例），需关注持有期');
+                                        if (customerProfile.liquidity === '高' && Number.isFinite(vol) && vol > 20) cons.push('波动偏高（示例），不宜作为底仓');
+                                        if (customerProfile.liquidity === '高' && Number.isFinite(vol) && vol <= 20) pros.push('波动相对可控（示例），更适合高流动性需求');
+
+                                        if (pros.length === 0) pros.push('策略相对清晰，适合做小比例配置');
+                                        if (cons.length === 0) cons.push('需结合客户资金用途与持有期进行配置');
+
+                                        return { pros, cons };
+                                    };
+
+                                    const aPc = buildProsCons(fundA);
+                                    const bPc = buildProsCons(fundB);
+
+                                    return (
+                                        <>
+                                            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-fuchsia-400 via-blue-400 to-emerald-400">
+                                                <div className="rounded-2xl p-4 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-white/60 shadow-lg">
+                                                    <div className="flex items-center mb-2">
+                                                        <Icon name="sparkles" className="w-4 h-4 text-amber-400 mr-2" />
+                                                        <div className="text-[12px] font-bold text-gray-800">AI 概述</div>
+                                                    </div>
+                                                    <p className="text-[12px] text-gray-700 leading-relaxed">
+                                                        {(() => {
+                                                            const concl = better
+                                                                ? `结合客户画像（${customerProfile.risk}/${customerProfile.liquidity}/${customerProfile.holdings}），更适合：${better.name}。`
+                                                                : `两只产品在客户画像下适配性接近，需结合持有期与资金用途取舍。`;
+                                                            const aS = `${fundA.name}：${fundA.summary}`;
+                                                            const bS = `${fundB.name}：${fundB.summary}`;
+                                                            const aRisk = riskTip(fundA);
+                                                            const bRisk = riskTip(fundB);
+                                                            let text = `${concl} ${aS} ${bS} 注意事项：${aRisk} ${bRisk}`;
+                                                            if (text.length > 200) text = text.slice(0, 200) + '…';
+                                                            return text;
+                                                        })()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            );
+
+            const renderAiFundSingle = (fund) => {
+                const advice = getSummaryAdviceForCustomer(fund);
+                return (
+                <div className="ai-bubble px-4 py-4 max-w-[95%] text-sm leading-relaxed text-gray-800 shadow-sm border border-gray-100">
+                    <p className="text-xs text-gray-400 mb-3 font-medium">*以下分析由AI基于公开披露信息生成，不构成投资建议。</p>
+                    <div className="space-y-6">
+                        <section className="space-y-2">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="info" className="w-4 h-4" />
+                                <span>1. 产品基础信息</span>
+                            </div>
+                            <div className="pl-6">
+                                <div className="space-y-1">
+                                    <div className="text-xs font-medium text-gray-800">{fund.type}</div>
+                                    <div className="text-xs font-medium text-gray-800">{fund.minBuy}</div>
+                                    <div className="text-xs font-medium text-gray-800">{fund.risk}</div>
+                                    <div className="text-[11px] text-gray-500">结合客户画像建议：优先小仓位试配，采用分批/定投方式进入。</div>
+                                </div>
+                            </div>
+                        </section>
+                        <section className="space-y-2">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="trending-up" className="w-4 h-4" />
+                                <span>2. 收益风险指标</span>
+                            </div>
+                            <ul className="pl-6 space-y-1 list-disc text-xs text-gray-600">
+                                <li><span className="font-bold">近一年涨跌幅：</span>{fund.yield1y}</li>
+                                <li><span className="font-bold">年化波动率（示例）：</span>{fund.volatility}</li>
+                                <li><span className="font-bold">最大回撤（示例）：</span>{fund.maxDrawdown}</li>
+                            </ul>
+                        </section>
+                        <section className="space-y-2">
+                            <div className="flex items-center space-x-2 text-blue-600 font-bold">
+                                <Icon name="target" className="w-4 h-4" />
+                                <span>3. 投资策略</span>
+                            </div>
+                            <p className="pl-6 text-xs text-gray-600">{fund.strategy}</p>
+                        </section>
+
+                        {(() => {
+                            const riskHigher = extractRiskLevelNumber(fund.risk) > extractRiskLevelNumber(customerProfile.risk);
+                            const note = riskHigher
+                                ? `本产品风险等级（${fund.risk}）高于客户风险等级（${customerProfile.risk}），不可作为推荐及营销，仅为参考。`
+                                : '本分析不可作为推荐及营销，仅为参考。';
+                            let summaryText = `${fund.name}（${fund.id}）：${fund.summary} ${note}`;
+                            if (summaryText.length > 200) summaryText = summaryText.slice(0, 200) + '…';
+                            return <AiGradientSummary text={summaryText} />;
+                        })()}
+                    </div>
+                </div>
+            );
+            };
+
+            const renderProductQueryAiMessage = (message) => {
+                if (message.kind === 'fund_picker_embed') {
+                    return renderAiFundPickerEmbed();
+                }
+                if (message.kind === 'fund_compare') {
+                    const [aId, bId] = message.funds || [];
+                    const a = getFundById(aId);
+                    const b = getFundById(bId);
+                    if (!a || !b) return null;
+                    return (
+                        <div className="space-y-3">
+                            <CustomerArchivePanel />
+                            {renderAiFundCompare(a, b)}
+                        </div>
+                    );
+                }
+                if (message.kind === 'fund_single') {
+                    const [id] = message.funds || [];
+                    const fund = getFundById(id);
+                    if (!fund) return null;
+                    return (
+                        <div className="space-y-3">
+                            <CustomerArchivePanel />
+                            {renderAiFundSingle(fund)}
+                        </div>
+                    );
+                }
+                return null;
             };
 
             return (
@@ -219,7 +830,14 @@
                         <h1 className="text-lg font-semibold">零售 AI 助手</h1>
                         <Icon name="more-horizontal" className="w-6 h-6 text-gray-800" />
                     </div>
-                    <div className="flex border-b text-sm font-medium text-gray-400 bg-white shrink-0">
+                    <div className="flex items-center border-b text-sm font-medium text-gray-400 bg-white shrink-0">
+                        <button
+                            onClick={() => setIsHistoryOpen(true)}
+                            className="px-3 py-3 text-gray-900 hover:text-blue-600 transition-colors"
+                            title="历史会话"
+                        >
+                            <Icon name="history" className="w-5 h-5" />
+                        </button>
                         <div 
                             onClick={() => window.location.href = 'fund_recommend_ai_assistant.html?tab=qa'}
                             className="flex-1 py-3 text-center cursor-pointer hover:text-blue-500 transition-colors"
@@ -228,7 +846,13 @@
                         </div>
                         <div className="flex-1 py-3 text-center border-b-2 border-blue-600 text-blue-600">客户</div>
                         <div className="flex-1 py-3 text-center">智能方案</div>
-                        <div className="px-4 py-3"><Icon name="message-square" className="w-5 h-5 text-gray-300" /></div>
+                        <button
+                            onClick={startNewChat}
+                            className="px-3 py-3 text-gray-900 hover:text-red-500 transition-colors"
+                            title="新建对话"
+                        >
+                            <Icon name="plus-circle" className="w-5 h-5" />
+                        </button>
                     </div>
                     <div className="flex-1 overflow-y-auto bg-gray-50/30 hide-scrollbar p-4 animate-fade-in">
                         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
@@ -265,24 +889,28 @@
                                 {/* User Question Bubble */}
                                 <div className="flex justify-end pr-2">
                                     <div className="user-bubble px-4 py-3 max-w-[85%] text-sm leading-relaxed shadow-sm">
-                                        给<span className="font-bold underline decoration-white/50">{customerProfile.name}</span> 
-                                        风险等级<span className="font-bold">[{customerProfile.risk}]</span> 
-                                        年龄<span className="font-bold">[{customerProfile.age}]</span> 
-                                        持仓<span className="font-bold">[{customerProfile.holdings}]</span> 
-                                        推荐产品
+                                        {activeSessionId && customerSessions.find(s => s.id === activeSessionId)?.messages?.[0]?.content
+                                            ? customerSessions.find(s => s.id === activeSessionId).messages[0].content
+                                            : (
+                                                <>
+                                                    给<span className="font-bold underline decoration-white/50">{customerProfile.name}</span> 
+                                                    风险等级<span className="font-bold">[{customerProfile.risk}]</span> 
+                                                    年龄<span className="font-bold">[{customerProfile.age}]</span> 
+                                                    持仓<span className="font-bold">[{customerProfile.holdings}]</span> 
+                                                    推荐产品
+                                                </>
+                                            )
+                                        }
                                     </div>
                                 </div>
 
                                 {/* AI Chat Bubble */}
-                                <div className="ai-bubble p-4 text-sm shadow-sm border border-gray-100 max-w-[95%]">
+                                <div className="space-y-3">
+                                    <CustomerArchivePanel />
+                                    <div className="ai-bubble p-4 text-sm shadow-sm border border-gray-100 max-w-[95%]">
                                     <p className="text-[10px] text-gray-400 mb-2 font-medium">*以下回答由AI生成，仅供参考</p>
                                     <div className="space-y-4">
                                         <p className="leading-relaxed font-medium">
-                                            针对客户 <span className="text-blue-600 font-bold">{customerProfile.name}</span> 的多维度画像：
-                                            <span className="text-gray-500 block text-xs mt-1">
-                                                • 风险等级：{customerProfile.risk} | 年龄：{customerProfile.age}岁 <br/>
-                                                • 资金流动性：{customerProfile.liquidity} | 持仓偏好：{customerProfile.holdings}
-                                            </span>
                                             我已为您精准匹配了以下方案：
                                         </p>
                                         
@@ -395,37 +1023,38 @@
                                                 1.不得采取虚假、夸大、片面等宣传方式误导客户购买产品；不得为代销产品违规提供直接或者间接、显性或者隐性担保，包括承诺本金或者收益保障；2.不得违规代替客户签署代销业务相关文件...
                                             </p>
                                         </div>
-
-                                        {/* Product Share Cards Carousel */}
-                                        <div className="flex space-x-3 overflow-x-auto hide-scrollbar -mx-1 px-1 py-2">
-                                            {deepAnalysisProducts.map((fund, idx) => (
-                                                <div key={idx} className="min-w-[240px] bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between">
-                                                    <div>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <h5 className="font-bold text-[13px] text-gray-800 line-clamp-1">{fund.name}</h5>
-                                                            <button className="bg-blue-500 text-white text-[10px] px-2 py-1 rounded-lg font-bold whitespace-nowrap active:bg-blue-600 transition-colors">分享客户</button>
-                                                        </div>
-                                                        <div className="mt-1">
-                                                            <div className="text-red-500 font-bold text-lg">{fund.yield}</div>
-                                                            <div className="text-[10px] text-gray-400">近一年涨跌幅</div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="mt-4 text-[10px] text-gray-400 font-medium">
-                                                        {fund.type} | 10元起购 | {fund.risk}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                         )}
 
                         {!aiContent && (
-                            <div className="space-y-4 opacity-40">
-                                <div className="h-32 bg-gray-100 rounded-2xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">详细业务数据加载中...</div>
-                                <div className="h-64 bg-gray-100 rounded-2xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">历史交互轨迹</div>
-                            </div>
+                            productQueryMessages.length > 0 ? (
+                                <div className="space-y-6 animate-fade-in">
+                                    {productQueryMessages.map((m, idx) => (
+                                        <div key={idx}>
+                                            {m.type === 'user' && (
+                                                <div className="flex justify-end pr-2">
+                                                    <div className="user-bubble px-4 py-3 max-w-[85%] text-sm leading-relaxed shadow-sm">
+                                                        {m.text}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {m.type === 'ai' && (
+                                                <div className="mt-4">
+                                                    {renderProductQueryAiMessage(m)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-4 opacity-40">
+                                    <div className="h-32 bg-gray-100 rounded-2xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">详细业务数据加载中...</div>
+                                    <div className="h-64 bg-gray-100 rounded-2xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">历史交互轨迹</div>
+                                </div>
+                            )
                         )}
                     </div>
 
@@ -445,7 +1074,10 @@
                                     </button>
                                 </div>
                                 <div className="flex space-x-3 mb-6">
-                                    <button className="flex-1 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-700 active:bg-gray-100 transition-all">
+                                    <button
+                                        onClick={openFundPicker}
+                                        className="flex-1 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-700 active:bg-gray-100 transition-all"
+                                    >
                                         基金查询
                                     </button>
                                     <button 
@@ -532,6 +1164,60 @@
                     {/* Floating vConsole */}
                     <div className="absolute bottom-24 right-4 px-3 py-1 bg-green-500 text-white text-[10px] font-bold rounded shadow-lg opacity-80">
                         vConsole
+                    </div>
+
+                    {/* History Drawer */}
+                    <div className={`absolute inset-0 z-50 transition-all duration-300 ${isHistoryOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'}`}>
+                        <div
+                            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isHistoryOpen ? 'opacity-100' : 'opacity-0'}`}
+                            onClick={() => setIsHistoryOpen(false)}
+                        ></div>
+                        <div className={`absolute top-0 bottom-0 left-0 w-[70%] max-w-[280px] bg-white shadow-2xl flex flex-col transition-transform duration-300 transform border-r border-gray-100 ${isHistoryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                            <div className="p-4 border-b flex items-center justify-between bg-white shrink-0">
+                                <div className="flex items-center space-x-2.5">
+                                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                        <Icon name="history" className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <span className="font-bold text-gray-900">客户历史</span>
+                                </div>
+                                <button onClick={() => setIsHistoryOpen(false)} className="p-1 text-gray-400 active:scale-90 transition-transform">
+                                    <Icon name="x" className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto py-2 px-3 space-y-2 bg-gray-50/30 hide-scrollbar">
+                                {customerSessions.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                        <Icon name="message-square" className="w-8 h-8 mb-2 opacity-20" />
+                                        <p className="text-[11px]">暂无客户历史</p>
+                                    </div>
+                                ) : customerSessions.map((session) => (
+                                    <div
+                                        key={session.id}
+                                        onClick={() => selectSession(session.id)}
+                                        className={`p-3.5 rounded-2xl transition-all cursor-pointer border ${activeSessionId === session.id ? 'bg-blue-600 border-blue-600 shadow-md shadow-blue-100' : 'bg-white border-gray-100 active:bg-gray-50 hover:border-blue-200'}`}
+                                    >
+                                        <div className={`text-xs font-bold mb-1 ${activeSessionId === session.id ? 'text-white/90' : 'text-gray-400'}`}>
+                                            {session.time || ''}
+                                        </div>
+                                        <div className={`text-sm font-bold leading-tight ${activeSessionId === session.id ? 'text-white' : 'text-gray-900'}`}>
+                                            {session.title || '会话'}
+                                        </div>
+                                        <div className={`text-xs mt-1.5 line-clamp-2 ${activeSessionId === session.id ? 'text-white/70' : 'text-gray-500'}`}>
+                                            {session.messages?.[0]?.content || '客户咨询'}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="p-4 border-t bg-white shrink-0">
+                                <button
+                                    onClick={clearCustomerHistory}
+                                    className="w-full py-3 flex items-center justify-center space-x-2 text-xs font-bold text-gray-400 hover:text-red-500 active:bg-red-50 active:text-red-600 rounded-xl transition-all"
+                                >
+                                    <Icon name="trash-2" className="w-4 h-4" />
+                                    <span>清空历史</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             );

@@ -118,6 +118,22 @@
             const [isFilterOpen, setIsFilterOpen] = useState(false);
             const [tempFilters, setTempFilters] = useState({});
             const [appliedFilters, setAppliedFilters] = useState({});
+            const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+            const [sessions, setSessions] = useState(() => {
+                try {
+                    return JSON.parse(localStorage.getItem('qa_sessions') || '[]');
+                } catch (e) {
+                    return [];
+                }
+            });
+            const [activeSessionId, setActiveSessionId] = useState(() => {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('qa_sessions') || '[]');
+                    return saved?.[0]?.id ?? null;
+                } catch (e) {
+                    return null;
+                }
+            });
             const pageSize = 5;
 
             const filterConfig = {
@@ -185,6 +201,38 @@
                 // lucide.createIcons(); // 已由 Icon 组件处理
             }, [activeTab]);
 
+            useEffect(() => {
+                try {
+                    localStorage.setItem('qa_sessions', JSON.stringify(sessions));
+                } catch (e) {}
+            }, [sessions]);
+
+            const startNewChat = () => {
+                const newSession = {
+                    id: Date.now(),
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    title: '新对话',
+                    messages: []
+                };
+                setSessions(prev => [newSession, ...prev]);
+                setActiveSessionId(newSession.id);
+                setIsHistoryOpen(false);
+            };
+
+            const selectSession = (sessionId) => {
+                setActiveSessionId(sessionId);
+                setIsHistoryOpen(false);
+            };
+
+            const clearHistory = () => {
+                setSessions([]);
+                setActiveSessionId(null);
+                setIsHistoryOpen(false);
+                try {
+                    localStorage.removeItem('qa_sessions');
+                } catch (e) {}
+            };
+
             return (
                 <div className="chat-container relative shadow-xl">
                     {/* Header */}
@@ -198,6 +246,13 @@
 
                     {/* Tabs */}
                     <div className="flex border-b text-sm font-medium text-gray-500 bg-white shrink-0">
+                        <button
+                            onClick={() => setIsHistoryOpen(true)}
+                            className="px-3 py-3 text-gray-900 hover:text-blue-600 transition-colors"
+                            title="历史会话"
+                        >
+                            <Icon name="history" className="w-5 h-5" />
+                        </button>
                         <div 
                             onClick={() => setActiveTab('qa')}
                             className={`flex-1 py-3 text-center border-b-2 transition-colors cursor-pointer ${activeTab === 'qa' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`}
@@ -216,7 +271,13 @@
                         >
                             智能方案
                         </div>
-                        <div className="px-4 py-3"><Icon name="message-square" className="w-5 h-5" /></div>
+                        <button
+                            onClick={startNewChat}
+                            className="px-3 py-3 text-gray-900 hover:text-red-500 transition-colors"
+                            title="新建对话"
+                        >
+                            <Icon name="plus-circle" className="w-5 h-5" />
+                        </button>
                     </div>
 
                     {/* Content Area */}
@@ -654,8 +715,59 @@
                         vConsole
                     </div>
 
+                    {/* History Drawer */}
+                    <div className={`absolute inset-0 z-50 transition-all duration-300 ${isHistoryOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'}`}>
+                        <div
+                            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isHistoryOpen ? 'opacity-100' : 'opacity-0'}`}
+                            onClick={() => setIsHistoryOpen(false)}
+                        ></div>
+                        <div className={`absolute top-0 bottom-0 left-0 w-[70%] max-w-[280px] bg-white shadow-2xl flex flex-col transition-transform duration-300 transform border-r border-gray-100 ${isHistoryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                            <div className="p-4 border-b flex items-center justify-between bg-white shrink-0">
+                                <div className="flex items-center space-x-2.5">
+                                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                        <Icon name="history" className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <span className="font-bold text-gray-900">历史会话</span>
+                                </div>
+                                <button onClick={() => setIsHistoryOpen(false)} className="p-1 text-gray-400 active:scale-90 transition-transform">
+                                    <Icon name="x" className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto py-2 px-3 space-y-2 bg-gray-50/30 hide-scrollbar">
+                                {sessions.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                        <Icon name="message-square" className="w-8 h-8 mb-2 opacity-20" />
+                                        <p className="text-[11px]">暂无历史会话</p>
+                                    </div>
+                                ) : sessions.map((session) => (
+                                    <div
+                                        key={session.id}
+                                        onClick={() => selectSession(session.id)}
+                                        className={`p-3.5 rounded-2xl transition-all cursor-pointer border ${activeSessionId === session.id ? 'bg-blue-600 border-blue-600 shadow-md shadow-blue-100' : 'bg-white border-gray-100 active:bg-gray-50 hover:border-blue-200'}`}
+                                    >
+                                        <div className={`text-xs font-bold mb-1 ${activeSessionId === session.id ? 'text-white/90' : 'text-gray-400'}`}>
+                                            {session.time || ''}
+                                        </div>
+                                        <div className={`text-sm font-bold leading-tight ${activeSessionId === session.id ? 'text-white' : 'text-gray-900'}`}>
+                                            {session.title || '会话'}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="p-4 border-t bg-white shrink-0">
+                                <button
+                                    onClick={clearHistory}
+                                    className="w-full py-3 flex items-center justify-center space-x-2 text-xs font-bold text-gray-400 hover:text-red-500 active:bg-red-50 active:text-red-600 rounded-xl transition-all"
+                                >
+                                    <Icon name="trash-2" className="w-4 h-4" />
+                                    <span>清空历史</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Filter Drawer */}
-                    <div className={`fixed inset-0 z-50 transition-all duration-300 ${isFilterOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'}`}>
+                    <div className={`absolute inset-0 z-50 transition-all duration-300 ${isFilterOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'}`}>
                         <div 
                             className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isFilterOpen ? 'opacity-100' : 'opacity-0'}`}
                             onClick={() => setIsFilterOpen(false)}
